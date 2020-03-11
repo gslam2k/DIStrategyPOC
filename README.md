@@ -188,8 +188,8 @@ public static async Task Main()
 ```
 
 Run Results:
-Display Delay in IntentProcessorDelay
-Display Available in IntentProcessorAvailable
-Display Average in IntentProcessorAverage
-The Intent Other is not handled (Parameter 'userIntent')
+- Display Delay in IntentProcessorDelay
+- Display Available in IntentProcessorAvailable
+- Display Average in IntentProcessorAverage
+- The Intent Other is not handled (Parameter 'userIntent')
 
