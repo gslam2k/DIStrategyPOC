@@ -8,9 +8,9 @@ namespace DIStrategyPOC.IntentStrategies
             this IServiceCollection services)
         {
             return services
-                .AddSingletonImplementingTypes<IIntentStrategy>()
-                .AddSingleton<IStrategyHelper, StrategyHelper>()
-                .AddSingleton<IIntentStrategyFactory, IntentStrategyFactory>();
+                .AddTransientImplementingTypes<IIntentStrategy>()
+                .AddTransient<IStrategyHelper, StrategyHelper>()
+                .AddTransient<IIntentStrategyFactory, IntentStrategyFactory>();
         }
     }
 }

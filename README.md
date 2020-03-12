@@ -89,7 +89,7 @@ private static readonly Lazy<IList<Type>> ExecutingTypes
         		.Where(t => !t.IsAbstract && !t.IsInterface)
         		.ToList());
 
-public static IServiceCollection AddSingletonImplementingTypes<IType>(
+public static IServiceCollection AddTransientImplementingTypes<IType>(
     this IServiceCollection services)
 {
     var interfaceType = typeof(IType);
@@ -97,7 +97,7 @@ public static IServiceCollection AddSingletonImplementingTypes<IType>(
     foreach (var type in ExecutingTypes.Value.
             Where(interfaceType.IsAssignableFrom))
     {
-        services.AddSingleton(interfaceType, type);
+        services.AddTransient(interfaceType, type);
     }
 
     return services;
@@ -110,25 +110,27 @@ There are several examples that handle a &quot;keyed&quot; registration. They al
 
 The key is used to select the appropriate strategy to use. Most examples use a LINQ Single/First query for each request. The POC populates a dictionary and uses a TryGetValue for the strategy lookup.
 ``` C#
-private static readonly Lazy<IList<Type>> ExecutingTypes 
-= new Lazy<IList<Type>>(
-    		() => Assembly.GetExecutingAssembly().ExportedTypes
-        		.Where(t => !t.IsAbstract && !t.IsInterface)
-        		.ToList());
+private readonly IDictionary<string, IIntentStrategy> _intentStrategies;
 
-public static IServiceCollection AddSingletonImplementingTypes<IType>(
-    this IServiceCollection services)
+public IntentStrategyFactory(IEnumerable<IIntentStrategy> intentStrategies)
 {
-    var interfaceType = typeof(IType);
+    _intentStrategies = intentStrategies.ToDictionary(x => x.Key);
+}
 
-    foreach (var type in ExecutingTypes.Value.
-            Where(interfaceType.IsAssignableFrom))
+public IIntentStrategy GetStrategy(UserIntent userIntent)
+{
+    if (_intentStrategies.TryGetValue(
+            userIntent.Intent.ToString(),
+            out var Strategy))
     {
-        services.AddSingleton(interfaceType, type);
+        return Strategy;
     }
 
-    return services;
+    throw new ArgumentException(
+        $"The Intent {userIntent.Intent} is not handled",
+        nameof(userIntent));
 }
+
 ```
 
 Where to set the registrations brings us to the third opportunity, separating out the various registrations into modules.
@@ -141,9 +143,9 @@ public static class IntentModule
         this IServiceCollection services)
     {
         return services
-            .AddSingletonImplementingTypes<IIntentStrategy>()
-            .AddSingleton<IStrategyHelper, StrategyHelper>()
-            .AddSingleton<IIntentStrategyFactory, IntentStrategyFactory>();
+            .AddTransientImplementingTypes<IIntentStrategy>()
+            .AddTransient<IStrategyHelper, StrategyHelper>()
+            .AddTransient<IIntentStrategyFactory, IntentStrategyFactory>();
     }
 }
 ```
